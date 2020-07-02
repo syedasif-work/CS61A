@@ -117,15 +117,26 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
     who = 0  # Who is about to take a turn, 0 (first) or 1 (second)
     # BEGIN PROBLEM 5
     "*** YOUR CODE HERE ***"
+    prev_score0 = 0
+    prev_score1 = 0
     while score0 < goal and score1 < goal:
         if not who:
-            score0 += take_turn(strategy0(score0, score1), score1, dice)
+            die0 = strategy0(score0, score1)
+            if feral_hogs and abs(die0 - prev_score0) == 2:
+                score0 += 3
+            prev_score0 = take_turn(die0, score1, dice)
+            score0 += prev_score0
             if (is_swap(score0, score1)):
                 score0, score1 = score1, score0
         else:
-            score1 += take_turn(strategy1(score1, score0), score0, dice)
+            die1 = strategy1(score1, score0)
+            if feral_hogs and abs(die1 - prev_score1) == 2:
+                score1 += 3
+            prev_score1 = take_turn(die1, score0, dice)
+            score1 += prev_score1
             if (is_swap(score1, score0)):
                 score1, score0 = score0, score1
+        say = say(score0, score1)
         who = other(who)
     # END PROBLEM 5
     # (note that the indentation for the problem 6 prompt (***YOUR CODE HERE***) might be misleading)
@@ -219,6 +230,22 @@ def announce_highest(who, last_score=0, running_high=0):
     assert who == 0 or who == 1, 'The who argument should indicate a player.'
     # BEGIN PROBLEM 7
     "*** YOUR CODE HERE ***"
+    def say(score0, score1):
+        nonlocal last_score
+        nonlocal running_high
+        if not who:
+            if score0 - last_score > running_high:
+                print(
+                    f"{score0 - last_score} point(s)! That's the biggest gain yet for Player {who}")
+                return announce_highest(who, score0, score0 - last_score)
+            return announce_highest(who, score0, running_high)
+        else:
+            if score1 - last_score > running_high:
+                print(
+                    f"{score1 - last_score} point(s)! That's the biggest gain yet for Player {who}")
+                return announce_highest(who, score1, score1 - last_score)
+            return announce_highest(who, score1, running_high)
+    return say
     # END PROBLEM 7
 
 
@@ -258,6 +285,14 @@ def make_averaged(original_function, trials_count=1000):
     """
     # BEGIN PROBLEM 8
     "*** YOUR CODE HERE ***"
+    def f(*args):
+        n = 0
+        total = 0
+        while n < trials_count:
+            total += original_function(*args)
+            n += 1
+        return total / trials_count
+    return f
     # END PROBLEM 8
 
 
@@ -272,6 +307,16 @@ def max_scoring_num_rolls(dice=six_sided, trials_count=1000):
     """
     # BEGIN PROBLEM 9
     "*** YOUR CODE HERE ***"
+    die = 1
+    num = 1
+    maxavg = 0
+    while num <= 10:
+        avg = make_averaged(roll_dice, trials_count)(num, dice)
+        if avg > maxavg:
+            maxavg = avg
+            die = num
+        num += 1
+    return die
     # END PROBLEM 9
 
 
@@ -320,7 +365,10 @@ def bacon_strategy(score, opponent_score, cutoff=8, num_rolls=6):
     rolls NUM_ROLLS otherwise.
     """
     # BEGIN PROBLEM 10
-    return 6  # Replace this statement
+    if free_bacon(opponent_score) >= cutoff:
+        return 0
+    else:
+        return num_rolls
     # END PROBLEM 10
 
 
@@ -330,7 +378,18 @@ def swap_strategy(score, opponent_score, cutoff=8, num_rolls=6):
     non-beneficial swap. Otherwise, it rolls NUM_ROLLS.
     """
     # BEGIN PROBLEM 11
-    return 6  # Replace this statement
+    score += free_bacon(opponent_score)
+    # print(score)
+    if score < opponent_score and is_swap(score, opponent_score):
+        return 0
+    elif score == opponent_score:
+        return bacon_strategy(score, opponent_score, cutoff, num_rolls)
+    elif score < opponent_score and not is_swap(score, opponent_score):
+        return bacon_strategy(score, opponent_score, cutoff, num_rolls)
+    elif score > opponent_score and not is_swap(score, opponent_score):
+        return bacon_strategy(score, opponent_score, cutoff, num_rolls)
+    else:
+        return num_rolls
     # END PROBLEM 11
 
 
