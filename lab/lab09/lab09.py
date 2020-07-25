@@ -89,6 +89,13 @@ def has_cycle(link):
     False
     """
     "*** YOUR CODE HERE ***"
+    links = []
+    while link is not Link.empty:
+        if link in links:
+            return True
+        links.append(link)
+        link = link.rest
+    return False
 
 
 def has_cycle_constant(link):
@@ -103,6 +110,17 @@ def has_cycle_constant(link):
     False
     """
     "*** YOUR CODE HERE ***"
+    if link is Link.empty:
+        return False
+    slow, fast = link, link.rest
+    while fast is not Link.empty:
+        if fast.rest is Link.empty:
+            return False
+        elif fast is slow or fast.rest is slow:
+            return True
+        else:
+            slow, fast = slow.rest, fast.rest.rest
+    return False
 
 
 def reverse_other(t):
@@ -119,6 +137,17 @@ def reverse_other(t):
     Tree(1, [Tree(8, [Tree(3, [Tree(5), Tree(4)]), Tree(6, [Tree(7)])]), Tree(2)])
     """
     "*** YOUR CODE HERE ***"
+    def rev_helper(t, dir):
+        if t.is_leaf():
+            return
+        new_labs = [child.label for child in t.branches][::-1]
+        for i in range(len(t.branches)):
+            child = t.branches[i]
+            rev_helper(child, not dir)
+            if dir:
+                child.label = new_labs[i]
+
+    return rev_helper(t, True)
 
 
 class Link:
